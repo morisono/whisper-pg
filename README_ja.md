@@ -41,11 +41,11 @@ bash tools/scripts/auto-edit.sh input.mp4 --unsilence 0.02 --addsub --fade-in ou
 ### 高度なオプション
 ```bash
 # 複数ファイルの処理
-fd -t f -e mp4 | bash tools/scripts/auto-edit.sh --concat --unsilence --split '5min' --speed 1.75 V"%02d.%03d"_"%FT%T".mp4
+fd -t f -e mp4 | bash tools/scripts/auto-edit.sh --concat --unsilence --split '5min' --speed 1.75 output.mp4
 
 # 音声抽出と処理
-ffmpeg -i input.mp4 -q:a 0 -map a audio.m4a
-bash tools/scripts/auto-edit.sh audio.m4a --unsilence 0.02 --addsub output.mp4
+ffmpeg -i input.mp4 -q:a 0 -map a tmp.mp4
+bash tools/scripts/auto-edit.sh tmp.mp4 --unsilence 0.02 --addsub output.mp4
 ```
 
 ## サンプル動画の取得
