@@ -79,7 +79,7 @@ show_progress() {
 
     while kill -0 $pid 2>/dev/null; do
         local temp=${spinstr#?}
-        printf " [%c] %s" "$spinstr" "$message"
+        printf "\r [%c] %s" "$spinstr" "$message"
         local spinstr=$temp${spinstr%"$temp"}
         sleep $delay
         printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
@@ -177,16 +177,17 @@ main() {
     # Check if file is audio-only
     if ffmpeg -i "$input_file" 2>&1 | grep -q "Video: none"; then
         # Use audio-based silence detection directly on audio file
-        auto-editor "$input_file" --edit "audio:threshold=$unsilence_threshold" --output "$temp_trimmed" &
-        pid=$!
-        show_progress $pid "\rTrimming silence (audio)"
+        auto-editor "$input_file" \
+        #  --edit "audio:threshold=$unsilence_threshold" --output "$temp_trimmed" &
+        # pid=$!
+        show_progress $pid "Trimming silence (audio)"
     else
         # Use motion detection for video files with explicit codec
         auto-editor "$input_file" \
-            --edit "motion:threshold=$unsilence_threshold" \
-            --output "$temp_trimmed" &
-        pid=$!
-        show_progress $pid "\rTrimming silence (video)"
+        #     --edit "motion:threshold=$unsilence_threshold" \
+        #     --output "$temp_trimmed" &
+        # pid=$!
+        show_progress $pid "Trimming silence (video)"
     fi
 
     if ! wait $pid; then
@@ -199,7 +200,7 @@ main() {
         local temp_speed="temp_speed_$(date +%s).mp4"
         add_temp_file "$temp_speed"
 
-        ffmpeg -i "$temp_trimmed" -filter:v "setpts=PTS/$speed" -filter:a "atempo=$speed" "$temp_speed" &
+        ffmpeg -i "$temp_trimmed" -filter:v "setpts=PTS/$speed" -filter:a "atempo=$speed"  "$temp_speed" &
         pid=$!
         show_progress $pid "Adjusting speed"
 
@@ -254,7 +255,7 @@ main() {
         local temp_subtitled="temp_subtitled_$(date +%s).mp4"
         add_temp_file "$temp_subtitled"
 
-        ffmpeg -i "$temp_trimmed" -vf "subtitles=$temp_srt:force_style='FontSize=16,Outline=0,BorderStyle=3,BackColour=&H80000000,OutlineColour=&H00000000,BorderStyle=2,MarginV=20,MarginL=20,MarginR=20'" -c:v libx264 -crf 15 -b:v 3000k "$temp_subtitled" &
+        ffmpeg -i "$temp_trimmed" -vf "subtitles=$temp_srt:force_style='FontSize=16,Outline=0,BorderStyle=3,BackColour=&H80000000,OutlineColour=&H00000000,BorderStyle=2,MarginV=20,MarginL=20,MarginR=20'" -c:v libx264 -pix_fmt yuv420p -crf 15 -b:v 3000k "$temp_subtitled" &
         pid=$!
         show_progress $pid "Burning subtitles"
 
@@ -307,7 +308,7 @@ main() {
     fi
 
     # Final output
-    mv "$temp_trimmed" "$output_file"
+    ffmpeg -i "$temp_trimmed" -c:v libx264 -pix_fmt yuv420p "$output_file"
     echo -e "\nProcessing complete. Output saved to: $output_file"
     cleanup
 }

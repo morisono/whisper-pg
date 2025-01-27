@@ -52,13 +52,21 @@ bash tools/scripts/auto-edit.sh audio.m4a --unsilence 0.02 --addsub output.mp4
 
 ### yt-dlpを使用
 ```bash
-set url "https://www.youtube.com/shorts/O5WOyZadFm0"
+# set url "https://www.youtube.com/shorts/O5WOyZadFm0"
+set url "https://www.youtube.com/shorts/TmnKpKMMcyo"
 
 # 字幕付きで動画をダウンロード
-yt-dlp -c yt-dlp.conf --write-subs --sub-lang en --merge-output-format mkv $url
+yt-dlp --config-location yt-dlp.conf $url
 
-# 字幕を焼き込んでMP4に変換
-HandBrakeCLI -i "input.mkv" -o "output.mp4" --subtitle-burn 1 --preset="Fast 1080p30"
+# (Optional)字幕を焼き込んでMP4に変換
+# yt-dlp --config-location yt-dlp.conf $url | xargs -i \
+# HandBrakeCLI -i {} -o "sub."{} --subtitle-burn 1 --preset="Fast 1080p30"
+
+# yt-dlp --config-location yt-dlp.conf $url --exec \
+#  "mkdir temp && ffmpeg -i {} -vf subtitles={}:force_style='FontName=cinecaption' -acodec copy temp/{} && mv -f temp/{} {} && rm -r temp" --restrict-filenames AO4In7d6X-c
+
+# Windows
+# ffmpeg.exe -i "input.mp4" -vf subtitles="filename='input.mp4':force_style='FontSize=20,FontName=Arial'" -c:v libx264 -x264-params crf=22 -preset fast -profile:v high "output.mp4"
 ```
 
 ## トラブルシューティング
