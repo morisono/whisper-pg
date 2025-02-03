@@ -26,9 +26,10 @@ handle_error() {
 
 # Check dependencies
 check_dependencies() {
+    local deps=("$@")
     local missing=()
-    for dep in ffmpeg auto-editor whisperx; do
-        if ! command -v $dep &> /dev/null; then
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
             missing+=("$dep")
         fi
     done
@@ -105,6 +106,7 @@ main() {
     local concat=false
     local split_duration=""
     local speed=1.0
+    local play=false
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -136,6 +138,10 @@ main() {
                 speed=$2
                 shift 2
                 ;;
+            --play)
+                play=true
+                shift
+                ;;
             *)
                 if [[ -z "$input_file" ]]; then
                     input_file=$1
@@ -156,7 +162,11 @@ main() {
     fi
 
     # Check dependencies and codecs
-    check_dependencies
+    required_deps=("ffmpeg" "auto-editor" "whisperx")
+    if $play; then
+        required_deps+=("mpv")
+    fi
+    check_dependencies "${required_deps[@]}"
 
     # Verify codec availability
     # if ! ffmpeg -codecs | grep -q libx264; then
@@ -310,6 +320,12 @@ main() {
     # Final output
     ffmpeg -i "$temp_trimmed" -c:v libx264 "$output_file"
     echo -e "\nProcessing complete. Output saved to: $output_file"
+
+    if $play; then
+        echo -e "\nPlaying output file with mpv..."
+        mpv "$output_file"
+    fi
+
     cleanup
 }
 
